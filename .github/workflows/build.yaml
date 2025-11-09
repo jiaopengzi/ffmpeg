@@ -45,7 +45,7 @@ jobs:
       - name: 构建并推送 Docker 镜像
         uses: docker/build-push-action@v6
         with:
+          context: .
           push: true # 构建完成后推送到远程镜像仓库, 使用触发的 tag 作为镜像标签(例如 v1.0.0), 同时推送 latest 标签
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ffmpeg:${{ github.ref }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/ffmpeg:latest
+            jiaopengzi/ffmpeg:latest
