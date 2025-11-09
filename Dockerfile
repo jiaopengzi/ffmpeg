@@ -1,5 +1,7 @@
+# 镜像创建命令: docker build -t blog-server:ffmpeg .
+
 # 1、使用 Debian Trixie 作为基础镜像
-FROM debian:trixie
+FROM debian:trixie-slim
 
 # 设置环境变量, 避免交互提示
 ENV DEBIAN_FRONTEND=noninteractive
