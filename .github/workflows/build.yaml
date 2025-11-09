@@ -1,0 +1,51 @@
+# FilePath    : ffmpeg/.github/workflows/build.yaml
+# Author      : jiaopengzi
+# Blog        : https://jiaopengzi.com
+# Copyright   : Copyright (c) 2025 by jiaopengzi, All Rights Reserved.
+# Description : github actions workflow 创建 docker 镜像并推送到 docker hub
+# 参考: https://github.com/docker/build-push-action
+
+name: Build and Push Docker Image
+
+on:
+  push:
+    tags:
+      - "v*" # 以 v 开头的 tag 触发, 如 v1.0.0
+  workflow_dispatch:
+    # 手动触发
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # 限制并发构建，防止同时构建多个
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # 在最新的 Ubuntu runner 上运行
+    steps:
+      # 检出仓库代码到 runner
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      # 登录到 Docker Hub, 使用仓库 secrets 中的用户名和 token 安全登录
+      - name: 登录到 Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }} # 在仓库 Settings -> Secrets 中配置 docker hub 用户名
+          password: ${{ secrets.DOCKERHUB_TOKEN }} # 在仓库 Settings -> Secrets 中配置 docker hub 访问令牌而非密码
+
+      # 设置 QEMU, 以支持不同 CPU 架构的模拟和多架构构建
+      - name: 设置 QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # 设置 Docker Buildx, 用于启用多平台镜像构建和并行构建器
+      - name: 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3 # 使用 build-push-action 构建并推送镜像到 Docker Hub
+
+      - name: 构建并推送 Docker 镜像
+        uses: docker/build-push-action@v6
+        with:
+          push: true # 构建完成后推送到远程镜像仓库, 使用触发的 tag 作为镜像标签(例如 v1.0.0), 同时推送 latest 标签
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/ffmpeg:${{ github.ref }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/ffmpeg:latest
