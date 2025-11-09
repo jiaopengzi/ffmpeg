@@ -49,3 +49,4 @@ jobs:
           push: true # 构建完成后推送到远程镜像仓库, 使用触发的 tag 作为镜像标签(例如 v1.0.0), 同时推送 latest 标签
           tags: |
             jiaopengzi/ffmpeg:latest
+            jiaopengzi/ffmpeg:${{ github.ref_name }}
