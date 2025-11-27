@@ -1,41 +1,47 @@
 # 镜像创建命令: docker build -t blog-server:ffmpeg .
 
-# 1、使用 Debian Trixie 作为基础镜像
+# 1、使用 Debian Trixie 作为编译环境
+FROM debian:trixie-slim AS builder
+
+# 设置环境变量, 避免交互提示
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 2、将 build 安装脚本拷贝到镜像中
+COPY build.sh /tmp/build.sh
+
+# 3、赋予脚本执行权限, 执行 build
+RUN chmod +x /tmp/build.sh && \
+    /tmp/build.sh
+
+# 验证版本信息
+RUN ffmpeg -version
+RUN ffprobe -version
+
+# 4、使用 Debian Trixie-slim 作为最终镜像
 FROM debian:trixie-slim
 
 # 设置环境变量, 避免交互提示
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 2、安装必要的工具(wget, tar, xz-utils), 用于下载和解压 ffmpeg
+# 5、安装 tzdata 用于设置时区, 设置时区为: Asia/Shanghai
+# 卸载安装时用到的临时工具和脚本, 减小镜像体积
 RUN apt update && \
     apt install -y --no-install-recommends \
-    wget \
-    xz-utils \
-    ca-certificates \
-    tzdata
-
-# 3、将 ffmpeg 安装脚本拷贝到镜像中
-COPY ffmpeg.sh /tmp/ffmpeg.sh
-
-# 4、赋予脚本执行权限, 并运行它来安装 ffmpeg
-RUN chmod +x /tmp/ffmpeg.sh && \
-    /tmp/ffmpeg.sh
-
-# 5、设置时区为: Asia/Shanghai
-RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-    echo "Asia/Shanghai" > /etc/timezone
-
-# 6、卸载安装时用到的临时工具和脚本, 减小镜像体积
-RUN apt remove -y --purge \
-    wget \
-    xz-utils && \
+    tzdata && \
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    echo "Asia/Shanghai" > /etc/timezone && \
     apt autoremove -y && \
     apt clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -f /tmp/ffmpeg.sh
+    rm -rf /var/lib/apt/lists/*
 
-# # 7、验证 ffmpeg 是否安装成功
-# RUN ffmpeg -version
+# 6、从编译环境中复制 ffmpeg 和 ffprobe 到最终镜像
+COPY --from=builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
+COPY --from=builder /usr/local/bin/ffprobe /usr/local/bin/ffprobe
+
+# 设置执行权限
+RUN chmod +x /usr/local/bin/ffmpeg && \
+    chmod +x /usr/local/bin/ffprobe
+
 
 # 设置默认命令
 CMD ["/bin/bash"]
