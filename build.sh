@@ -16,10 +16,10 @@ SRC_DIR="$BUILD_DIR/src"
 # ========== 第一步:安装编译依赖 ==========
 echo "【1/6】正在安装编译所需的依赖包..."
 
-sudo apt update
+apt update
 
 # 基础构建工具
-sudo apt install -y \
+apt install -y \
     build-essential \
     git \
     wget \
@@ -32,7 +32,7 @@ sudo apt install -y \
     cmake
 
 # 安装 zlib 开发包 (用于 PNG/JPEG 图像支持)
-sudo apt install -y zlib1g-dev
+apt install -y zlib1g-dev
 
 # 注意:不通过 apt 安装 libx264-dev！
 # 因为它只提供动态库 (.so), 而我们需要静态库 (.a) 用于生成无依赖二进制.
@@ -58,7 +58,7 @@ cd "$X264_SRC"
     --prefix=/usr/local
 
 make -j "$(nproc)"
-sudo make install
+make install
 
 # 查看静态库是否安装成功
 if [ ! -f "/usr/local/lib/libx264.a" ]; then
@@ -208,10 +208,10 @@ make -j "$(nproc)"
 
 echo "【6/6】正在安装 FFmpeg 到 /usr/local..."
 
-sudo make install
+make install
 
 # 更新动态链接库缓存
-sudo ldconfig
+ldconfig
 
 # ========== 第六步:验证结果 ==========
 FFMPEG_BIN=$(which ffmpeg || echo "/usr/local/bin/ffmpeg")
@@ -229,8 +229,8 @@ echo "🎉 FFmpeg (tag: $FFMPEG_TAG) 已成功安装！"
 echo ""
 
 # 给 ffmpeg 和 ffprobe 可执行权限
-sudo chmod +x "$FFMPEG_BIN"
-sudo chmod +x "$FFPROBE_BIN"
+chmod +x "$FFMPEG_BIN"
+chmod +x "$FFPROBE_BIN"
 
 # 验证是否为静态二进制
 echo "🔍 检查 ffmpeg 是否为静态链接:"
