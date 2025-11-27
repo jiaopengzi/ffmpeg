@@ -11,7 +11,7 @@ COPY build.sh /tmp/build.sh
 
 # 3、赋予脚本执行权限, 执行 build
 RUN chmod +x /tmp/build.sh && \
-    /tmp/build.sh
+    bash /tmp/build.sh
 
 # 验证版本信息
 RUN ffmpeg -version
