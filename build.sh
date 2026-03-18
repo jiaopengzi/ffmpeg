@@ -4,8 +4,8 @@
 set -e
 
 # ========== 用户可配置参数 ==========
-# 版本: n8.0.1
-FFMPEG_TAG="n8.0.1"
+# 版本: n8.0.1 n8.1
+FFMPEG_TAG="n8.1"
 
 # 临时构建目录
 BUILD_DIR="/tmp/ffmpeg_build"
