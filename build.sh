@@ -133,10 +133,16 @@ declare -a configure_args=(
     "--enable-demuxer=avi"      # AVI
 
     # ========== 解码器(Decoders)—— 用于 ffprobe 和封面抽取 ==========
-    "--enable-decoder=h264" # H.264 视频解码(输入)
-    "--enable-decoder=hevc" # H.265/HEVC 解码(支持读取 HEVC 视频, 但不编码)
-    "--enable-decoder=aac"  # AAC 音频解码
-    "--enable-decoder=mp3"  # MP3 音频解码
+    "--enable-decoder=h264"      # H.264 视频解码(输入)
+    "--enable-decoder=hevc"      # H.265/HEVC 解码(支持读取 HEVC 视频, 但不编码)
+    "--enable-decoder=aac"       # AAC 音频解码
+    "--enable-decoder=mp3"       # MP3 音频解码
+    "--enable-decoder=ac3"       # 杜比 AC3 音频解码(MKV/AVI 高频携带)
+    "--enable-decoder=eac3"      # 杜比 E-AC3 音频解码(蓝光/流媒体常见)
+    "--enable-decoder=opus"      # Opus 音频解码(WebM/MKV 常见)
+    "--enable-decoder=vorbis"    # Vorbis 音频解码(WebM 常见)
+    "--enable-decoder=flac"      # FLAC 无损音频解码(部分 MKV 携带)
+    "--enable-decoder=pcm_s16le" # PCM 16bit LE 音频解码(AVI 常见)
 
     # ========== 编码器(Encoders)—— 根据你的命令需求 ==========
     "--enable-encoder=libx264" # H.264 编码(HLS 多码率转码必需)
@@ -151,6 +157,8 @@ declare -a configure_args=(
     "--enable-parser=h264"          # H.264 流解析
     "--enable-parser=hevc"          # HEVC 流解析
     "--enable-parser=aac"           # AAC 音频解析
+    "--enable-parser=ac3"           # AC3 流解析
+    "--enable-parser=opus"          # Opus 流解析
     "--enable-bsf=h264_mp4toannexb" # MP4 to Annex B(TS 封装必需)
     "--enable-bsf=hevc_mp4toannexb" # HEVC 的等效转换
 

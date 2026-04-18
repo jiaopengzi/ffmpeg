@@ -43,6 +43,7 @@
         "DOCKERHUB",
         "fdata",
         "ffunction",
+        "FLAC",
         "gnutls",
         "htmlpages",
         "libsrt",
@@ -68,6 +69,7 @@
         "tzdata",
         "vaapi",
         "vdpau",
+        "Vorbis",
         "xlib",
         "yasm",
         "zoneinfo"
