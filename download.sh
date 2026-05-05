@@ -6,7 +6,7 @@
 # Description : ffmpeg 工具 安装预编译版 FFmpeg(来自 BtbN/FFmpeg-Builds); 安装到：/usr/local/bin
 
 # 定义变量
-DOWNLOAD_URL="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.1-latest-linux64-gpl-8.0.tar.xz" # BtbN 官方最新预编译版下载地址
+DOWNLOAD_URL="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.1-latest-linux64-gpl-8.1.1.tar.xz" # BtbN 官方最新预编译版下载地址
 TEMP_DIR="/tmp/ffmpeg_install"                                                                                          # 临时下载和解压目录
 INSTALL_DIR="/usr/local/bin"                                                                                            # 安装目录
 
