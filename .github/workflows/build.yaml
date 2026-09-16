@@ -28,7 +28,7 @@ jobs:
     steps:
       # 检出仓库代码到 runner
       - name: 检出代码
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # 登录到 Docker Hub, 使用仓库 secrets 中的用户名和 token 安全登录
       - name: 登录到 Docker Hub
