@@ -4,8 +4,10 @@
 set -e
 
 # ========== 用户可配置参数 ==========
-# 版本: n8.0.1 n8.1 n8.1.1 n8.1.2 n9.0 n9.0.1 n9.0.2
 FFMPEG_TAG="n9.0.2"
+
+# x264 源码 commit(锁定版本以保证构建可复现, 也便于按 GPL 提供对应源码)
+X264_COMMIT="0480cb05fa188d37ae87e8f4fd8f1aea3711f7ee"
 
 # 临时构建目录
 BUILD_DIR="/tmp/ffmpeg_build"
@@ -16,23 +18,17 @@ SRC_DIR="$BUILD_DIR/src"
 # ========== 第一步:安装编译依赖 ==========
 echo "【1/6】正在安装编译所需的依赖包..."
 
-apt update
+apt-get update
 
 # 基础构建工具
-apt install -y \
+apt-get install -y \
     build-essential \
     git \
-    wget \
-    yasm \
     nasm \
-    pkg-config \
-    autoconf \
-    automake \
-    libtool \
-    cmake
+    pkg-config
 
-# 安装 zlib 开发包 (用于 PNG/JPEG 图像支持)
-apt install -y zlib1g-dev
+# 安装 zlib 开发包 (用于 PNG 编码)
+apt-get install -y zlib1g-dev
 
 # 注意:不通过 apt 安装 libx264-dev！
 # 因为它只提供动态库 (.so), 而我们需要静态库 (.a) 用于生成无依赖二进制.
@@ -46,8 +42,11 @@ if [ -d "$X264_SRC" ]; then
     rm -rf "$X264_SRC"
 fi
 
-git clone --depth=1 https://code.videolan.org/videolan/x264.git "$X264_SRC"
+mkdir -p "$X264_SRC"
 cd "$X264_SRC"
+git init -q
+git fetch -q --depth=1 https://code.videolan.org/videolan/x264.git "$X264_COMMIT"
+git checkout -q FETCH_HEAD
 
 # 静态编译 x264:仅生成 libx264.a, 不生成命令行工具或动态库
 ./configure \
@@ -123,7 +122,7 @@ declare -a configure_args=(
     "--enable-muxer=segment" # 分段切片(.ts)
     "--enable-muxer=mp4"     # MP4 输出(备用)
     "--enable-muxer=mpegts"  # MPEG-TS 封装(HLS 片段底层格式)
-    "--enable-muxer=image2"  # 图像序列输出(封面 PNG/JPEG)
+    "--enable-muxer=image2"  # 图像序列输出(封面 PNG)
 
     # ========== 解复用器(Demuxers)—— 输入格式 ==========
     "--enable-demuxer=mov"      # .mp4, .mov, .m4a, .m4v
@@ -143,15 +142,17 @@ declare -a configure_args=(
     "--enable-decoder=vorbis"    # Vorbis 音频解码(WebM 常见)
     "--enable-decoder=flac"      # FLAC 无损音频解码(部分 MKV 携带)
     "--enable-decoder=pcm_s16le" # PCM 16bit LE 音频解码(AVI 常见)
-
+    "--enable-decoder=dca"       # DTS 音频解码(与 blog-server 音频白名单 dts 对齐)
+    
     # ========== 编码器(Encoders)—— 根据你的命令需求 ==========
     "--enable-encoder=libx264" # H.264 编码(HLS 多码率转码必需)
     "--enable-encoder=aac"     # AAC 音频编码(使用 FFmpeg 内置 encoder)
     "--enable-encoder=png"     # PNG 图像编码(封面输出)
 
     # ========== 滤镜(Filters)—— 多码率 split 和封面缩放 ==========
-    "--enable-filter=scale" # 视频缩放(1080p/720p 转码)
-    "--enable-filter=split" # 视频流分发([0:v]split=2[v1][v2])
+    "--enable-filter=scale"     # 视频缩放(1080p/720p 转码)
+    "--enable-filter=split"     # 视频流分发([0:v]split=2[v1][v2])
+    "--enable-filter=aresample" # 音频采样率/声道/采样格式转换(-ar/-ac 音频转码必需)
 
     # ========== 解析器与比特流过滤器(Parser & BSF)==========
     "--enable-parser=h264"          # H.264 流解析
@@ -159,6 +160,7 @@ declare -a configure_args=(
     "--enable-parser=aac"           # AAC 音频解析
     "--enable-parser=ac3"           # AC3 流解析
     "--enable-parser=opus"          # Opus 流解析
+    "--enable-parser=dca"           # DTS 流解析
     "--enable-bsf=h264_mp4toannexb" # MP4 to Annex B(TS 封装必需)
     "--enable-bsf=hevc_mp4toannexb" # HEVC 的等效转换
 
@@ -193,7 +195,7 @@ declare -a configure_args=(
     # ========== 第三方库支持 ==========
     "--enable-gpl"     # 启用 GPL 组件(如 x264)
     "--enable-libx264" # 启用 x264 编码器(必须已静态安装 libx264.a)
-    "--enable-zlib"    # 启用 zlib (PNG/JPEG 支持)
+    "--enable-zlib"    # 启用 zlib (PNG 编码)
 
     # ========== 编译与链接标志 —— 拆开写, 不要用引号包裹 ==========
     "--extra-cflags=-I/usr/local/include" # 告诉编译器在哪里找 x264 头文件
@@ -217,6 +219,13 @@ make -j "$(nproc)"
 echo "【6/6】正在安装 FFmpeg 到 /usr/local..."
 
 make install
+
+# 随二进制附带 GPL 许可文本与源码版本, 供分发时查验
+LICENSE_DIR="/usr/local/share/licenses/ffmpeg"
+mkdir -p "$LICENSE_DIR"
+cp COPYING.GPLv2 LICENSE.md "$LICENSE_DIR/"
+cp "$X264_SRC/COPYING" "$LICENSE_DIR/COPYING.x264"
+printf 'FFMPEG_TAG=%s\nX264_COMMIT=%s\n' "$FFMPEG_TAG" "$X264_COMMIT" >"$LICENSE_DIR/BUILD_INFO"
 
 # 更新动态链接库缓存
 ldconfig
@@ -249,7 +258,7 @@ elif ldd "$FFMPEG_BIN" 2>&1 | grep -q "statically linked"; then
 else
     echo "⚠️ 警告:ffmpeg 包含动态依赖:"
     ldd "$FFMPEG_BIN"
-    echo "💡 提示:这是正常的(依赖 glibc), 但只要不依赖外部 .so 即可在容器中运行."
+    echo "💡 提示:这是正常的, 仅依赖 glibc(libc/libm) 与 zlib(libz), debian:trixie-slim 已自带."
 fi
 
 echo ""

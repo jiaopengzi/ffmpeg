@@ -10,10 +10,13 @@ name: Build and Push Docker Image
 on:
   push:
     tags:
-      - "*" # 任何 tag 推送都会触发
+      - "[0-9]*" # 仅版本号 tag(如 9.0.2)触发, 避免其他 tag 覆盖 latest
       # - "v*" # 以 v 开头的 tag 触发, 如 v1.0.0
   workflow_dispatch:
     # 手动触发
+
+permissions:
+  contents: read # 只需读取代码, 推送镜像使用 Docker Hub token
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -32,14 +35,10 @@ jobs:
 
       # 登录到 Docker Hub, 使用仓库 secrets 中的用户名和 token 安全登录
       - name: 登录到 Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }} # 在仓库 Settings -> Secrets 中配置 docker hub 用户名
           password: ${{ secrets.DOCKERHUB_TOKEN }} # 在仓库 Settings -> Secrets 中配置 docker hub 访问令牌而非密码
-
-      # 设置 QEMU, 以支持不同 CPU 架构的模拟和多架构构建
-      - name: 设置 QEMU
-        uses: docker/setup-qemu-action@v4
 
       # 设置 Docker Buildx, 用于启用多平台镜像构建和并行构建器
       - name: 设置 Docker Buildx
@@ -49,6 +48,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          platforms: linux/amd64 # blog-server 运行环境为 amd64, 如需 arm64 需加回 QEMU 步骤
           push: true # 构建完成后推送到远程镜像仓库, 使用触发的 tag 作为镜像标签(例如 v1.0.0), 同时推送 latest 标签
           tags: |
             jiaopengzi/ffmpeg:latest

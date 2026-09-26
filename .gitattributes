@@ -1,0 +1,2 @@
+# shell 脚本会在 Linux 容器内执行, 需强制 LF 换行
+*.sh text eol=lf
