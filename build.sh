@@ -4,7 +4,7 @@
 set -e
 
 # ========== 用户可配置参数 ==========
-FFMPEG_TAG="n9.0.2"
+FFMPEG_TAG="n9.1"
 
 # x264 源码 commit(锁定版本以保证构建可复现, 也便于按 GPL 提供对应源码)
 X264_COMMIT="0480cb05fa188d37ae87e8f4fd8f1aea3711f7ee"
